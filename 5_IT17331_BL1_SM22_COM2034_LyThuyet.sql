@@ -282,11 +282,107 @@ ELSE
 
 -- Viết 1 chương trình tính điểm thi Qua môn  
 DECLARE @DiemThi_COM2034 FLOAT
-SET @DiemThi_COM2034 = 4.9
+SET @DiemThi_COM2034 = 9
 IF @DiemThi_COM2034 < 5
 	PRINT N'Chúc mừng bạn vừa mất 700k'
+ELSE IF(@DiemThi_COM2034 < 7)
+	PRINT N'Chúc mừng bạn vừa mất 300K'
 ElSE
 	PRINT N'Chúc mừng bạn vừa không mất 700k'
 
 -- Về nhà làm bài tập: Tính điểm trung bình môn SQL theo các điều kiện sau: XUẤT SẮC, GIỎI, KHÁ, TRUNG BÌNH, HỌC LẠI.
 
+/* 2.9 IF EXISTS
+IF EXISTS (CaulenhSELECT)
+Cau_lenhl | Khoi_lenhl
+[ELSE
+Cau_lenh2 | Khoi_lenh2] 
+*/
+-- Kiểm tra xem trong bảng chi tiết sản phẩm có sản phẩm nào số lượng tồn lớn hơn 900
+IF EXISTS(
+	SELECT * FROM ChiTietSP
+	WHERE SoLuongTon > 900)
+	BEGIN
+		PRINT N'Có danh sách sản phẩm lớn hơn 900 tồn'
+		SELECT * FROM ChiTietSP
+		WHERE SoLuongTon > 900
+	END
+ELSE 
+BEGIN
+	PRINT N'Không Có danh sách sản phẩm lớn hơn 900 tồn'
+END
+/*
+ 3.0 Hàm IIF () trả về một giá trị nếu một điều kiện là TRUE hoặc một giá trị khác nếu một điều kiện là FALSE.
+IIF(condition, value_if_true, value_if_false)
+*/
+SELECT IIF(5>9,N'Đúng',N'Sai')
+
+SELECT Ma,Ten,
+	IIF(IdCH = 1,N'Nhân viên thuộc CH1',IIF(IdCH = 2,N'Nhân viên thuộc CH2',N'Không xác định'))
+FROM NhanVien
+
+/*
+3.1 Câu lệnh CASE đi qua các điều kiện và trả về một giá trị khi điều kiện đầu tiên được đáp ứng (như câu lệnh IF-THEN-ELSE). 
+Vì vậy, một khi một điều kiện là đúng, nó sẽ ngừng đọc và trả về kết quả. 
+Nếu không có điều kiện nào đúng, nó sẽ trả về giá trị trong mệnh đề ELSE.
+Nếu không có phần ELSE và không có điều kiện nào đúng, nó sẽ trả về NULL.
+CASE
+    WHEN condition1 THEN result1
+    WHEN condition2 THEN result2
+    WHEN conditionN THEN resultN
+    ELSE result
+END;
+*/
+-- Cách 1
+SELECT 
+	Ten = CASE GioiTinh
+			WHEN 'Nam' THEN 'Anh. ' + Ten
+			WHEN N'Nữ' THEN N'Chị. ' + Ten
+			ELSE N'Không xác định. ' + Ten
+			END
+FROM NhanVien
+-- Cách 2
+SELECT 
+	Ten = CASE 
+			WHEN GioiTinh = 'Nam' THEN 'Anh. ' + Ten
+			WHEN GioiTinh = N'Nữ' THEN N'Chị. ' + Ten
+			ELSE N'Không xác định. ' + Ten
+			END
+FROM NhanVien
+-- Ví dụ về tính lương nhân viên.
+DECLARE @TB_NV TABLE(MaNV VARCHAR(50),Luong FLOAT)
+INSERT INTO @TB_NV
+VALUES('Dungna',5000000),('Minhdq',10000000),('Tiennh',7000000),('Thiennh',6000000)
+--Sử dụng CASE WHEN THEN tính thuế thu nhập theo điều kiện sau 1=> 5tr mức 5%, 6tr đến 7tr => 10%, Trên 10tr => 15% thuê. Hãy tạo ra cột ính thuế thu nhập cho bảng tạm trên.
+SELECT MaNV,Luong,
+(
+CASE
+WHEN Luong <= 5000000 THEN Luong*0.05
+WHEN Luong >= 5000000 AND Luong <= 7000000  THEN Luong*0.1
+ELSE Luong*0.15
+END
+)AS N'Thuế'
+FROM @TB_NV
+/*Vòng lặp WHILE (WHILE LOOP) được sử dụng nếu bạn muốn 
+chạy lặp đi lặp lại một đoạn mã khi điều kiện cho trước trả về giá trị là TRUE.*/
+DECLARE @DEM INT = 0
+WHILE @DEM < 5
+BEGIN
+	PRINT N'MÔN CSDL NÂNG CAO QUAN TRỌNG PHẢI CHỊU KHÓ CODE'
+	PRINT N'LẦN CHẠY' + CONVERT(VARCHAR, @DEM)
+	SET @DEM = @DEM +1
+END
+
+/*Lệnh Break (Ngắt vòng lặp)*/
+/* Lệnh Continue: Thực hiện bước lặp tiếp theo bỏ qua các lệnh trong */
+DECLARE @DEM INT = 0
+WHILE @DEM < 10
+BEGIN
+	IF @DEM = 5
+		BEGIN
+			CONTINUE
+		END
+	PRINT N'MÔN CSDL NÂNG CAO QUAN TRỌNG PHẢI CHỊU KHÓ CODE'
+	PRINT N'LẦN CHẠY' + CONVERT(VARCHAR, @DEM)
+	SET @DEM = @DEM +1
+END
