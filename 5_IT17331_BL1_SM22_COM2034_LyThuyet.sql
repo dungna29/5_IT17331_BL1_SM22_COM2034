@@ -380,9 +380,170 @@ WHILE @DEM < 10
 BEGIN
 	IF @DEM = 5
 		BEGIN
+			SET @DEM += 1
 			CONTINUE
 		END
 	PRINT N'MÔN CSDL NÂNG CAO QUAN TRỌNG PHẢI CHỊU KHÓ CODE'
 	PRINT N'LẦN CHẠY' + CONVERT(VARCHAR, @DEM)
 	SET @DEM = @DEM +1
 END
+-- Lam chủ 1 vòng lặp cần 3 thứ sau:
+-- 1. Điểm bắt đầu
+-- 2. Điều kiện ngắt vòng lặp
+-- 3. Bước nhẩy
+
+/* 3.2 Try...Catch 
+SQLServer Transact-SQL cung cấp cơ chế kiểm soát lỗi bằng TRY … CATCH
+như trong các ngôn ngữ lập trình phổ dụng hiện nay (Java, C, PHP, C#).
+Một số hàm ERROR thường dùng
+_
+ERROR_NUMBER() : Trả về mã số của lỗi dưới dạng số
+ERROR_MESSAGE() Trả lại thông báo lỗi dưới hình thức văn bản 
+ERROR_SEVERITY() Trả lại mức độ nghiêm trọng của lỗi kiểu int
+ERROR_STATE() Trả lại trạng thái của lỗi dưới dạng số
+ERROR_LINE() : Trả lại vị trí dòng lệnh đã phát sinh ra lỗi
+ERROR_PROCEDURE() Trả về tên thủ tục/Trigger gây ra lỗi
+*/
+SELECT 1 + 'String'
+BEGIN TRY
+	SELECT 1 + 'String'
+END TRY
+BEGIN CATCH
+	SELECT 
+	ERROR_NUMBER() AS N'Trả về mã số của lỗi dưới dạng số',
+	ERROR_MESSAGE() AS N'Trả lại thông báo lỗi dưới hình thức văn bản',
+	ERROR_LINE() AS N'Trả lại vị trí dòng lệnh đã phát sinh ra lỗi'
+END CATCH
+
+-- Ví dụ 2:
+BEGIN TRY
+	INSERT INTO ChucVu VALUES ('NVaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',N'Nhân Viên')
+END TRY
+BEGIN CATCH
+	PRINT N'Không insert thành công vào bảng chứcc vụ'
+	PRINT N'Thông báo: ' + CONVERT(VARCHAR,ERROR_NUMBER())
+	PRINT N'Thông báo: ' + ERROR_MESSAGE()
+END CATCH
+/* 3.3 RAISERROR
+*/
+-- CÓ dùng RAISERROR
+BEGIN TRY
+	INSERT INTO ChucVu VALUES ('NVaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',N'Nhân Viên')
+END TRY
+BEGIN CATCH
+	DECLARE @erERROR_SEVERITY INT,@erERROR_MESSAGE VARCHAR(MAX),@erERROR_STATE INT
+	SELECT
+		@erERROR_SEVERITY = ERROR_SEVERITY(),
+		@erERROR_MESSAGE = ERROR_MESSAGE(),
+		@erERROR_STATE = ERROR_STATE()
+	RAISERROR(@erERROR_MESSAGE,@erERROR_SEVERITY,@erERROR_STATE)
+END CATCH
+-- Không dùng
+BEGIN TRY
+	INSERT INTO ChucVu VALUES ('NVaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',N'Nhân Viên')
+END TRY
+BEGIN CATCH
+	DECLARE @erERROR_SEVERITY INT,@erERROR_MESSAGE VARCHAR(MAX),@erERROR_STATE INT
+	SELECT
+		@erERROR_SEVERITY = ERROR_SEVERITY(),
+		@erERROR_MESSAGE = ERROR_MESSAGE(),
+		@erERROR_STATE = ERROR_STATE()
+	PRINT N'Thông Báo: ' +  ERROR_MESSAGE() + ' | ' + CONVERT(VARCHAR,ERROR_SEVERITY()) + ' | ' + CONVERT(VARCHAR,ERROR_STATE())
+END CATCH
+-- 3.4 Ý nghĩa của Replicate
+DECLARE @ten1234 NVARCHAR(50)
+SET @ten1234 = REPLICATE(N'Á',5)--Lặp lại số lần với String truyền vào
+PRINT @ten1234
+
+/* TỔNG KẾT STORE PROCEDURE :
+ -- Là lưu trữ một tập hợp các câu lệnh đi kèm trong CSDL cho phép tái sử dụng khi cần
+ -- Hỗ trợ các ứng dụng tương tác nhanh và chính xác
+ -- Cho phép thực thi nhanh hơn cách viết từng câu lệnh SQL
+ -- Stored procedure có thể làm giảm bớt vấn đề kẹt đường truyền mạng, dữ liệu được gởi theo gói.
+ -- Stored procedure có thể sử dụng trong vấn đề bảo mật, phân quyền
+ -- Có 2 loại Store Procedure chính: System stored	procedures và User stored procedures   
+ 
+ -- Cấu trúc của Store Procedure bao hồm:
+	➢Inputs: nhận các tham số đầu vào khi cần
+	➢Execution: kết hợp giữa các yêu cầu nghiệp vụ với các lệnh
+	lập trình như IF..ELSE, WHILE...
+	➢Outputs: trả ra các đơn giá trị (số, chuỗi…) hoặc một tập kết quả.
+ 
+ --Cú pháp:
+ CREATE hoặc ALTER(Để cập nhật nếu đã tồn tại tên SP) PROC <Tên STORE PROCEDURE> <Tham số truyền vào nếu có>
+ AS
+ BEGIN
+  <BODY CODE>
+ END
+ ĐỂ GỌI SP dùng EXEC hoặc EXECUTE
+SPs chia làm 2 loại:
+System stored procedures: Thủ tục mà những người sử dụng chỉ có quyền thực hiện, không được phép thay đổi.	
+User stored procedures: Thủ tục do người sử dụng tạo và thực hiện.
+ -- SYSTEM STORED PROCEDURES
+ Là những stored procedure chứa trong Master Database, thường bắt đầu bằng tiếp đầu ngữ	 sp_
+ Chủ yếu dùng trong việc quản lý cơ sở dữ liệu(administration) và bảo mật (security).
+❑Ví dụ: sp_helptext <tên của đối tượng> : để lấy định nghĩa của đối tượng (thông số tên đối
+tượng truyền vào) trong Database
+ */
+
+ GO
+ ALTER PROCEDURE SP_LayDSNhanVienNam
+ AS
+ SELECT * FROM NhanVien WHERE GioiTinh = N'Nữ'
+
+-- Thực thi thì cần biết rõ tên của Store nào và có thể có 2 cách gõ
+EXECUTE dbo.SP_LayDSNhanVienNam
+EXEC dbo.SP_LayDSNhanVienNam
+
+-- VIỆC TRIỂN KHAI ĐƯỢC STORE PROC GIÚP CÁC BẠN BÊN JAVA HỌC MÔN 3, DỰ ÁN 1, DỰ ÁN TỐT NGHIỆP DỄ HƠN.
+
+-- Ví dụ 2:
+GO
+CREATE PROC SP_LayDSSanPhamCoDK(@NamBH INT,@SLT INT)
+AS
+SELECT Id,NamBH,MoTa,SoLuongTon,GiaNhap
+FROM ChiTietSP WHERE NamBH = @NamBH AND SoLuongTon >= @SLT
+
+EXEC SP_LayDSSanPhamCoDK @NamBH  = 2,@SLT = 600
+
+-- Ví dụ 3: CRUD 1 BẢNG
+GO
+ALTER PROC SP_CRUDF_DongSP
+		(@Id INT,
+		@Ma VARCHAR(20),
+		@Ten NVARCHAR(30),
+		@SType VARCHAR(10))
+AS
+BEGIN
+	IF(@SType = 'SELECT')	
+	BEGIN
+		SELECT * FROM DongSP
+	END
+	IF(@SType = 'INSERT')	
+	BEGIN
+		INSERT INTO DongSP VALUES(@Ma,@Ten)
+	END
+	IF(@SType = 'DELETE')	
+	BEGIN
+		DELETE FROM DongSP WHERE Id = @Id
+	END
+	IF(@SType = 'UPDATE')	
+	BEGIN
+		UPDATE DongSP SET
+		Ma = @Ma,
+		Ten = @Ten
+		WHERE Id = @Id
+	END
+	IF(@SType = 'FIND')	
+	BEGIN
+		SELECT * FROM DongSP WHERE Ma = @Ma
+	END
+END
+-- Thực thi
+EXEC SP_CRUDF_DongSP @Id = 0,@Ma = '',@Ten = '',@SType = 'SELECT'
+EXEC SP_CRUDF_DongSP @Id = 0,@Ma = 'DUNGNA29',@Ten = N'Dũng',@SType = 'INSERT'
+
+DECLARE @myid uniqueidentifier = NEWID();
+--002EED55-D45C-485F-8DD1-9666CAB3124B           
+SELECT CONVERT(CHAR(255), @myid) AS 'char';  
+
